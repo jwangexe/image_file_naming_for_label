@@ -1,2 +1,14 @@
 images
 .DS_Store
+pdf
+*.json
+pages
+*.txt
+*.pkl
+*.csv
+*.xlsx
+回单照片
+*.rar
+回单照片aspire
+test_again
+*.zip

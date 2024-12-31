@@ -2,9 +2,13 @@ import os
 from google.cloud import vision
 from google.cloud.vision_v1 import types
 import io
+import pickle
 
 # Set the path to the credentials JSON file (set the environment variable as shown above)
 os.environ["GOOGLE_APPLICATION_CREDENTIALS"] = "receipt-id-naming-a5ddc498c7c0.json"
+
+WRITTEN_PATH = "taken_names.pkl"
+taken = [0]*30000
 
 # Initialize the Vision API client
 client = vision.ImageAnnotatorClient()
@@ -35,11 +39,6 @@ def extract_text_from_image(image_path):
 
 # Function to rename images in the directory based on extracted ID
 def rename_images_in_directory(image_directory):
-    added = [0]*30000
-    for filename in os.listdir(image_directory):
-        if len(filename.rstrip(".jpgne")) == 5:
-            added[int(filename.strip(".jpgne"))] = 1
-
     for filename in os.listdir(image_directory):
         file_path = os.path.join(image_directory, filename)
 
@@ -57,26 +56,21 @@ def rename_images_in_directory(image_directory):
                 # Assuming the ID is numeric and extract it from the detected text
                 id_number = ''.join(filter(str.isdigit, extracted_text))
                 # remove the last digit because it's a 3 and has nothing to do with the id
-                if id_number[-1] == "3":
-                    id_number = id_number[:-1]
+                id_number = id_number[:len(id_number)-1]
                 # take only the last 5 digits
                 id_number = id_number[-5:]
 
-                new_filename = f"{id_number}.jpg"  # Modify the file extension as needed
-
                 # ID number must be between 15000 and 26000
-                if not 15000 < int(id_number) < 26000 or added[int(id_number)]:
-                    # wrong
-                    new_file_path = os.path.join("./test_again", filename)
-                    os.rename(file_path, new_file_path)
-                    print(f"Renamed to {new_file_path}")
-                else:
-                    # normal
+                if not 15000 < int(id_number) < 26000:
+                    id_number = input(f"{filename} requires manual labelling")
+                if id_number:
+                    # Rename the file with the extracted ID number
+                    new_filename = f"{id_number}.jpg"  # Modify the file extension as needed
                     new_file_path = os.path.join(image_directory, new_filename)
                     # Rename the file
                     os.rename(file_path, new_file_path)
-                    print(f"Renamed to {new_file_path}")
-                    added[int(id_number)] = 1
+                    print(f"Renamed to {new_filename}")
+                    
             else:
                 print(f"No text found in image: {filename}")
         else:
